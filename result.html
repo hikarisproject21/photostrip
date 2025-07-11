@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Quantico:ital,wght@0,400;0,700;1,400;1,700&display=swap" rel="stylesheet">
+  <title>Result - Download</title>
+  <style>
+    * {
+      box-sizing: border-box;
+        font-family: "Quantico", sans-serif;
+    }
+    body {
+      margin: 0;
+      padding:0;
+      background-color: #f7f9fc;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      color: #333;
+    }
+    .phone-frame {
+background-image: url("photostrip.jpg");
+background-size: cover;
+background-position: bottom center;
+      max-width: 375px;
+      width: 100%;
+      background-color: white;
+      border-radius: 30px;
+      box-shadow: 0 0 20px rgba(0, 0, 0, 0.15);
+      overflow: hidden;
+      padding: 30px 20px;
+      display: flex;
+      flex-direction: column;
+      justify-content: start;
+      align-items: center;
+      text-align: center;
+      min-height: 90vh;
+    }
+    .container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      padding: 10px;
+      background: #d4c9e1;
+      border-radius: 20px;
+      border: 2px solid white;
+    }
+
+    h1 {
+      font-size: 1.8rem;
+      margin-bottom: 0.5rem;
+      color: #968cb9;
+    }
+
+    canvas {
+      border-radius: 8px;
+      /* margin-bottom: 10px; */
+      max-width: 90%;
+    }
+
+    button {
+      padding: 10px 20px;
+      background-color: #6b5aac;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background 0.2s ease-in-out;
+      margin-bottom: 10px;
+    }
+
+    button:disabled {
+      background-color: #ccc;
+      cursor: not-allowed;
+    }
+
+    button:hover:not(:disabled) {
+      background-color: #1b66d1;
+    }
+
+
+      @media (max-width: 480px) {
+      .phone-frame {
+      min-width: 100vw ;
+      min-height: 100vh;
+      margin:0;
+      border: none;
+      border-radius: 0;
+      box-shadow: none;
+    }
+  }
+
+    @keyframes fadeInFromTop {
+      0% {
+        opacity: 0;
+        transform: translateY(-80px);
+      }
+      100% {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .fade-in {
+      animation: fadeInFromTop 2s ease-out forwards;
+    }
+    #loadingOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(247, 249, 252, 0.95);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+  transition: opacity 0.3s ease;
+}
+
+#loadingOverlay p {
+  margin-top: 10px;
+  color: #555;
+  font-weight: bold;
+  font-size: 1.2rem;
+}
+
+.spinner {
+  border: 6px solid #ddd;
+  border-top: 6px solid #6b5aac;
+  border-radius: 50%;
+  width: 50px;
+  height: 50px;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+  </style>
+</head>
+<body>
+    <div id="loadingOverlay">
+  <div class="spinner"></div>
+  <p>Loading...</p>
+</div>
+  <div class="phone-frame">
+    <div class="container">
+      <h1>Sweet poses</h1>
+      <canvas id="previewCanvas" class="fade-in" width="238" height="674"></canvas><br>
+      <canvas id="outputCanvas" width="2380" height="6740" style="display: none;"></canvas>
+      <button id="downloadBtn">Download Strip</button>
+      <!-- <button id="backBtn" style="margin-top: 10px; background-color: #888;">← Kembali ke Foto</button> -->
+    </div>
+  </div>
+
+  <script>
+    const previewCanvas = document.getElementById("previewCanvas");
+    const previewCtx = previewCanvas.getContext("2d");
+
+    const outputCanvas = document.getElementById("outputCanvas");
+    const outputCtx = outputCanvas.getContext("2d");
+
+    outputCtx.imageSmoothingEnabled = true;
+    outputCtx.imageSmoothingQuality = "high";
+
+    previewCtx.imageSmoothingEnabled = true;
+    previewCtx.imageSmoothingQuality = "high";
+
+    // Ukuran template dan rasio kecil
+    const outputSize = { w: 2382, h: 6738 };
+    const previewSize = { w: 238, h: 674 };
+
+    // Ukuran frame kotak hitam di template
+    const photoSize = {
+      w: 2200, h: 1700,
+      previewW: 220, previewH: 170
+    };
+
+    // Posisi foto dalam template (estimasi dari gambar)
+    const positionsOutput = [
+      { x: 150, y: 236 },     // frame 1 (atas)
+      { x: 150, y: 2010 },    // frame 2 (tengah)
+      { x: 150, y: 3810 },    // frame 3 (bawah)
+    ];
+
+    // Posisi di preview canvas (disesuaikan)
+    const positionsPreview = positionsOutput.map(pos => ({
+      x: Math.round(pos.x * (previewSize.w / outputSize.w)),
+      y: Math.round(pos.y * (previewSize.h / outputSize.h))
+    }));
+
+    const photoData = JSON.parse(sessionStorage.getItem("photoData") || "[]");
+
+    const templateImg = new Image();
+    templateImg.src = "wonwooday.png"; // pastikan path benar
+
+    function drawImageCover(ctx, img, x, y, w, h) {
+      const imgRatio = img.width / img.height;
+      const targetRatio = w / h;
+      let drawWidth, drawHeight, offsetX, offsetY;
+
+      if (imgRatio > targetRatio) {
+        drawHeight = img.height;
+        drawWidth = img.height * targetRatio;
+        offsetX = (img.width - drawWidth) / 2;
+        offsetY = 0;
+      } else {
+        drawWidth = img.width;
+        drawHeight = img.width / targetRatio;
+        offsetX = 0;
+        offsetY = (img.height - drawHeight) / 2;
+      }
+
+      ctx.drawImage(img, offsetX, offsetY, drawWidth, drawHeight, x, y, w, h);
+    }
+const startTime = Date.now();
+    function drawAll() {
+      previewCtx.clearRect(0, 0, previewCanvas.width, previewCanvas.height);
+      outputCtx.clearRect(0, 0, outputCanvas.width, outputCanvas.height);
+
+  if (photoData.length === 0) {
+  alert("Tidak ada foto untuk digabung.");
+  document.getElementById("loadingOverlay").style.display = "none";
+  return;
+}
+
+
+      let loaded = 0;
+
+      photoData.forEach((dataUrl, i) => {
+        const img = new Image();
+        img.src = dataUrl;
+
+        img.onload = () => {
+          drawImageCover(outputCtx, img, positionsOutput[i].x, positionsOutput[i].y, photoSize.w, photoSize.h);
+          drawImageCover(previewCtx, img, positionsPreview[i].x, positionsPreview[i].y, photoSize.previewW, photoSize.previewH);
+
+          loaded++;
+if (loaded === photoData.length) {
+  const hideLoading = () => {
+  const elapsed = Date.now() - startTime;
+  const remainingTime = Math.max(0, 2000 - elapsed); // minimal 1 detik
+
+  setTimeout(() => {
+    const overlay = document.getElementById("loadingOverlay");
+    overlay.style.opacity = "0";
+    setTimeout(() => {
+      overlay.style.display = "none";
+    }, 300); // waktu animasi fade-out
+  }, remainingTime);
+};
+
+
+  if (templateImg.complete) {
+    outputCtx.drawImage(templateImg, 0, 0, outputSize.w, outputSize.h);
+    previewCtx.drawImage(templateImg, 0, 0, previewSize.w, previewSize.h);
+    hideLoading();
+  } else {
+    templateImg.onload = () => {
+      outputCtx.drawImage(templateImg, 0, 0, outputSize.w, outputSize.h);
+      previewCtx.drawImage(templateImg, 0, 0, previewSize.w, previewSize.h);
+      hideLoading();
+    };
+  }
+}
+        };
+      });
+    }
+
+    drawAll();
+
+    document.getElementById("downloadBtn").addEventListener("click", () => {
+      const link = document.createElement("a");
+      link.download = "photo-strip.png";
+      link.href = outputCanvas.toDataURL();
+      link.click();
+    });
+
+    document.getElementById("backBtn").addEventListener("click", () => {
+      window.location.href = "photo.html";
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Take a Photo</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Quantico:ital,wght@0,400;0,700;1,400;1,700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  </style>
+</head>
+<body>
+  <div class="phone-frame">
+     <img src="wonwoos.png" alt="Logo" class="center-image4">
+    <!-- <h4>Let's Take a Photo</h4> -->
+        <p id="count">Ready</p>
+    <video id="video" autoplay></video>
+    <div class="preview-row" id="previewRow"></div>
+    <div id="countdown" style="font-size: 32px; margin-top: 10px; color: #e74c3c; font-weight: bold;"></div>
+
+    <button id="captureBtn" class="captureBtn">Take a Photo</button>
+    <button id="nextBtn" disabled>See the result</button>
+  </div>
+
+  <div id="flash"></div>
+
+  <div class="modal" id="modal">
+    <div class="modal-content">
+      <button class="close-modal" id="closeModal">×</button>
+      <img id="modalImg" src="" />
+    </div>
+  </div>
+
+  <script>
+    const video = document.getElementById("video");
+    const captureBtn = document.getElementById("captureBtn");
+    const countText = document.getElementById("count");
+    const nextBtn = document.getElementById("nextBtn");
+    const previewRow = document.getElementById("previewRow");
+    const flash = document.getElementById("flash");
+    const modal = document.getElementById("modal");
+    const modalImg = document.getElementById("modalImg");
+    const closeModal = document.getElementById("closeModal");
+
+    const maxPhotos = 3;
+    let photos = [];
+
+    navigator.mediaDevices.getUserMedia({ video: true }).then(stream => {
+      video.srcObject = stream;
+    });
+
+function updateUI() {
+  if (photos.length >= maxPhotos) {
+    countText.textContent = "Selesai";
+  } else if (photos.length < 1) {
+    countText.textContent = "Ready";
+  } else {
+    countText.textContent = `Foto ke-${photos.length + 1} dari ${maxPhotos}`;
+  }
+  captureBtn.disabled = (photos.length >= maxPhotos);
+  nextBtn.disabled = (photos.length !== maxPhotos);
+}
+
+
+    function renderPreviews() {
+      previewRow.innerHTML = '';
+      photos.forEach((dataURL, index) => {
+        const container = document.createElement("div");
+        container.className = "preview-container";
+
+        const img = document.createElement("img");
+        img.src = dataURL;
+        img.onclick = () => {
+          modalImg.src = dataURL;
+          modal.style.display = "flex";
+        };
+
+        const remove = document.createElement("button");
+        remove.className = "remove-btn";
+        remove.textContent = "×";
+        remove.onclick = (e) => {
+          e.stopPropagation();
+          photos.splice(index, 1);
+          renderPreviews();
+          updateUI();
+        };
+
+        container.appendChild(img);
+        container.appendChild(remove);
+        previewRow.appendChild(container);
+      });
+    }
+
+ captureBtn.addEventListener("click", () => {
+  let remainingPhotos = maxPhotos - photos.length;
+  if (remainingPhotos <= 0) return;
+
+  captureBtn.disabled = true;
+  let countdownEl = document.getElementById("countdown");
+  let currentIndex = 0;
+
+  function takePhotoWithCountdown() {
+    let countdown = 3;
+    countdownEl.textContent = countdown;
+
+    let timer = setInterval(() => {
+      countdown--;
+      countdownEl.textContent = countdown;
+
+      if (countdown === 0) {
+        clearInterval(timer);
+        countdownEl.textContent = "";
+
+        flash.style.opacity = 1;
+        setTimeout(() => flash.style.opacity = 0, 150);
+
+ // Ukuran final fix
+const canvas = document.createElement("canvas");
+canvas.width = 220;
+canvas.height = 170;
+
+const ctx = canvas.getContext("2d");
+
+// Ambil ukuran asli video
+const videoWidth = video.videoWidth;
+const videoHeight = video.videoHeight;
+
+// Rasio aspect target dan asli
+const targetAspect = canvas.width / canvas.height;
+const videoAspect = videoWidth / videoHeight;
+
+let sx, sy, sWidth, sHeight;
+
+// Tentukan area cropping
+if (videoAspect > targetAspect) {
+  // Video lebih lebar, crop sisi kiri & kanan
+  sHeight = videoHeight;
+  sWidth = videoHeight * targetAspect;
+  sx = (videoWidth - sWidth) / 2;
+  sy = 0;
+} else {
+  // Video lebih tinggi, crop atas & bawah
+  sWidth = videoWidth;
+  sHeight = videoWidth / targetAspect;
+  sx = 0;
+  sy = (videoHeight - sHeight) / 2;
+}
+
+// Mirror jika perlu
+ctx.translate(canvas.width, 0);
+ctx.scale(-1, 1);
+
+// Gambar area yang dicrop ke canvas fix size
+ctx.drawImage(
+  video,
+  sx, sy, sWidth, sHeight, // area di video asli
+  0, 0, canvas.width, canvas.height // area di canvas hasil
+);
+
+
+        const dataURL = canvas.toDataURL();
+        photos.push(dataURL);
+
+        renderPreviews();
+        updateUI();
+
+        currentIndex++;
+        if (currentIndex < remainingPhotos) {
+          setTimeout(takePhotoWithCountdown, 500); // jeda sebelum countdown berikutnya
+        } else {
+          captureBtn.disabled = (photos.length >= maxPhotos); // aktifkan lagi kalau masih kurang
+        }
+      }
+    }, 1000);
+  }
+
+  takePhotoWithCountdown();
+});
+
+
+    nextBtn.addEventListener("click", () => {
+      sessionStorage.setItem("photoData", JSON.stringify(photos));
+      window.location.href = "result.html";
+    });
+
+    closeModal.addEventListener("click", () => {
+      modal.style.display = "none";
+    });
+
+    window.addEventListener("click", (e) => {
+      if (e.target === modal) modal.style.display = "none";
+    });
+
+    updateUI();
+  </script>
+</body>
+</html>

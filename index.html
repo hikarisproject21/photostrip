@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <meta property="og:image" content="" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Quantico:ital,wght@0,400;0,700;1,400;1,700&display=swap" rel="stylesheet">
+    <title>Photostrip wonwoo day</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="phone-frame">
+        <img src="photo.png" alt="Logo" class="center-image">
+        <img src="wonwoos.png" alt="Logo" class="center-image2">
+        <img src="99.png" alt="Logo" class="center-image3">
+        <!-- <img src="tanggal.png" alt="Logo" class="center-image5"> -->
+        <button class="start" onclick="start()">START HERE</button>
+    </div>
+
+    <script>
+        function start() {
+            document.body.classList.add("fade-out");
+            setTimeout(() => {
+                window.location.href = "photo.html"; // ganti ke halaman tujuanmu
+            }, 600); // waktu harus sama dengan CSS transition
+        }
+    </script>
+</body>
+</html>
