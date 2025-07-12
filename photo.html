@@ -20,6 +20,8 @@
     <div id="countdown" style="font-size: 32px; margin-top: 10px; color: #e74c3c; font-weight: bold;"></div>
 
     <button id="captureBtn" class="captureBtn">Take a Photo</button>
+    <input type="file" id="uploadInput" accept="image/*" style="display:none">
+    <button id="uploadBtn" class="captureBtn">Upload a Photo</button>
     <button id="nextBtn" disabled>See the result</button>
   </div>
 
@@ -193,6 +195,58 @@ ctx.drawImage(
     });
 
     updateUI();
+  const uploadInput = document.getElementById("uploadInput");
+const uploadBtn = document.getElementById("uploadBtn");
+
+uploadBtn.addEventListener("click", () => {
+  uploadInput.click(); // buka file picker
+});
+
+uploadInput.addEventListener("change", (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = function (event) {
+    const img = new Image();
+    img.onload = function () {
+      // Crop dan resize gambar ke ukuran final 220x170, mirip kamera
+      const canvas = document.createElement("canvas");
+      canvas.width = 220;
+      canvas.height = 170;
+      const ctx = canvas.getContext("2d");
+
+      const imgAspect = img.width / img.height;
+      const targetAspect = canvas.width / canvas.height;
+
+      let sx, sy, sWidth, sHeight;
+
+      if (imgAspect > targetAspect) {
+        sHeight = img.height;
+        sWidth = img.height * targetAspect;
+        sx = (img.width - sWidth) / 2;
+        sy = 0;
+      } else {
+        sWidth = img.width;
+        sHeight = img.width / targetAspect;
+        sx = 0;
+        sy = (img.height - sHeight) / 2;
+      }
+
+      ctx.drawImage(img, sx, sy, sWidth, sHeight, 0, 0, canvas.width, canvas.height);
+
+      const dataURL = canvas.toDataURL();
+      photos.push(dataURL);
+
+      renderPreviews();
+      updateUI();
+    };
+
+    img.src = event.target.result;
+  };
+
+  reader.readAsDataURL(file);
+});
   </script>
 </body>
 </html>
