@@ -195,8 +195,11 @@ ctx.drawImage(
     });
 
     updateUI();
-  const uploadInput = document.getElementById("uploadInput");
+const uploadInput = document.getElementById("uploadInput");
 const uploadBtn = document.getElementById("uploadBtn");
+
+// Array tambahan untuk menyimpan versi high-res (jika diperlukan)
+let photosHighRes = [];
 
 uploadBtn.addEventListener("click", () => {
   uploadInput.click(); // buka file picker
@@ -210,14 +213,20 @@ uploadInput.addEventListener("change", (e) => {
   reader.onload = function (event) {
     const img = new Image();
     img.onload = function () {
-      // Crop dan resize gambar ke ukuran final 220x170, mirip kamera
-      const canvas = document.createElement("canvas");
-      canvas.width = 2200;
-      canvas.height = 1700;
-      const ctx = canvas.getContext("2d");
+      // Cek apakah gambar cukup besar
+      if (img.width < 800 || img.height < 600) {
+        alert("Gambar terlalu kecil, bisa blur saat dicrop. Gunakan gambar beresolusi lebih tinggi.");
+        return;
+      }
+
+      // === VERSI HIGH RES (2200 x 1700) ===
+      const canvasBig = document.createElement("canvas");
+      canvasBig.width = 2200;
+      canvasBig.height = 1700;
+      const ctxBig = canvasBig.getContext("2d");
 
       const imgAspect = img.width / img.height;
-      const targetAspect = canvas.width / canvas.height;
+      const targetAspect = canvasBig.width / canvasBig.height;
 
       let sx, sy, sWidth, sHeight;
 
@@ -233,10 +242,22 @@ uploadInput.addEventListener("change", (e) => {
         sy = (img.height - sHeight) / 2;
       }
 
-      ctx.drawImage(img, sx, sy, sWidth, sHeight, 0, 0, canvas.width, canvas.height);
+      ctxBig.drawImage(img, sx, sy, sWidth, sHeight, 0, 0, canvasBig.width, canvasBig.height);
+      const highResDataURL = canvasBig.toDataURL();
 
-      const dataURL = canvas.toDataURL();
-      photos.push(dataURL);
+      // === VERSI PREVIEW KECIL (220 x 170) ===
+      const canvasSmall = document.createElement("canvas");
+      canvasSmall.width = 220;
+      canvasSmall.height = 170;
+      const ctxSmall = canvasSmall.getContext("2d");
+      ctxSmall.drawImage(canvasBig, 0, 0, canvasBig.width, canvasBig.height, 0, 0, canvasSmall.width, canvasSmall.height);
+      const smallPreviewDataURL = canvasSmall.toDataURL();
+
+      // Simpan versi kecil untuk ditampilkan
+      photos.push(smallPreviewDataURL);
+
+      // (Opsional) Simpan versi besar untuk keperluan lain (download/result)
+      photosHighRes.push(highResDataURL);
 
       renderPreviews();
       updateUI();
