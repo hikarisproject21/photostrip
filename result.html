@@ -164,131 +164,145 @@ background-position: bottom center;
   </div>
 
   <script>
-    const previewCanvas = document.getElementById("previewCanvas");
-    const previewCtx = previewCanvas.getContext("2d");
+const previewCanvas = document.getElementById("previewCanvas");
+const previewCtx = previewCanvas.getContext("2d");
 
-    const outputCanvas = document.getElementById("outputCanvas");
-    const outputCtx = outputCanvas.getContext("2d");
+const outputCanvas = document.getElementById("outputCanvas");
+const outputCtx = outputCanvas.getContext("2d");
 
-    outputCtx.imageSmoothingEnabled = true;
-    outputCtx.imageSmoothingQuality = "high";
+outputCtx.imageSmoothingEnabled = true;
+outputCtx.imageSmoothingQuality = "high";
 
-    previewCtx.imageSmoothingEnabled = true;
-    previewCtx.imageSmoothingQuality = "high";
+previewCtx.imageSmoothingEnabled = true;
+previewCtx.imageSmoothingQuality = "high";
 
-    // Ukuran template dan rasio kecil
-    const outputSize = { w: 2382, h: 6738 };
-    const previewSize = { w: 238, h: 674 };
+// Ukuran template dan rasio kecil
+const outputSize = { w: 2382, h: 6738 };
+const previewSize = { w: 238, h: 674 };
 
-    // Ukuran frame kotak hitam di template
-    const photoSize = {
-      w: 2200, h: 1700,
-      previewW: 220, previewH: 170
-    };
-
-    // Posisi foto dalam template (estimasi dari gambar)
-    const positionsOutput = [
-      { x: 150, y: 236 },     // frame 1 (atas)
-      { x: 150, y: 2010 },    // frame 2 (tengah)
-      { x: 150, y: 3810 },    // frame 3 (bawah)
-    ];
-
-    // Posisi di preview canvas (disesuaikan)
-    const positionsPreview = positionsOutput.map(pos => ({
-      x: Math.round(pos.x * (previewSize.w / outputSize.w)),
-      y: Math.round(pos.y * (previewSize.h / outputSize.h))
-    }));
-
-    const photoData = JSON.parse(sessionStorage.getItem("photoData") || "[]");
-
-    const templateImg = new Image();
-    templateImg.src = "wonwooday.png"; // pastikan path benar
-
-    function drawImageCover(ctx, img, x, y, w, h) {
-      const imgRatio = img.width / img.height;
-      const targetRatio = w / h;
-      let drawWidth, drawHeight, offsetX, offsetY;
-
-      if (imgRatio > targetRatio) {
-        drawHeight = img.height;
-        drawWidth = img.height * targetRatio;
-        offsetX = (img.width - drawWidth) / 2;
-        offsetY = 0;
-      } else {
-        drawWidth = img.width;
-        drawHeight = img.width / targetRatio;
-        offsetX = 0;
-        offsetY = (img.height - drawHeight) / 2;
-      }
-
-      ctx.drawImage(img, offsetX, offsetY, drawWidth, drawHeight, x, y, w, h);
-    }
-const startTime = Date.now();
-    function drawAll() {
-      previewCtx.clearRect(0, 0, previewCanvas.width, previewCanvas.height);
-      outputCtx.clearRect(0, 0, outputCanvas.width, outputCanvas.height);
-
-  if (photoData.length === 0) {
-  alert("Tidak ada foto untuk digabung.");
-  document.getElementById("loadingOverlay").style.display = "none";
-  return;
-}
-
-
-      let loaded = 0;
-
-      photoData.forEach((dataUrl, i) => {
-        const img = new Image();
-        img.src = dataUrl;
-
-        img.onload = () => {
-          drawImageCover(outputCtx, img, positionsOutput[i].x, positionsOutput[i].y, photoSize.w, photoSize.h);
-          drawImageCover(previewCtx, img, positionsPreview[i].x, positionsPreview[i].y, photoSize.previewW, photoSize.previewH);
-
-          loaded++;
-if (loaded === photoData.length) {
-  const hideLoading = () => {
-  const elapsed = Date.now() - startTime;
-  const remainingTime = Math.max(0, 2000 - elapsed); // minimal 1 detik
-
-  setTimeout(() => {
-    const overlay = document.getElementById("loadingOverlay");
-    overlay.style.opacity = "0";
-    setTimeout(() => {
-      overlay.style.display = "none";
-    }, 300); // waktu animasi fade-out
-  }, remainingTime);
+// Ukuran frame kotak hitam di template
+const photoSize = {
+  w: 2200, h: 1700,
+  previewW: 220, previewH: 170
 };
 
+// Posisi foto dalam template (disesuaikan manual)
+const positionsOutput = [
+  { x: 150, y: 236 },
+  { x: 150, y: 2010 },
+  { x: 150, y: 3810 }
+];
 
-  if (templateImg.complete) {
-    outputCtx.drawImage(templateImg, 0, 0, outputSize.w, outputSize.h);
-    previewCtx.drawImage(templateImg, 0, 0, previewSize.w, previewSize.h);
-    hideLoading();
+const positionsPreview = positionsOutput.map(pos => ({
+  x: Math.round(pos.x * (previewSize.w / outputSize.w)),
+  y: Math.round(pos.y * (previewSize.h / outputSize.h))
+}));
+
+// Ambil data dari sessionStorage
+const photoData = JSON.parse(sessionStorage.getItem("photoData") || "[]"); // kecil
+const photoDataHighRes = JSON.parse(sessionStorage.getItem("photoDataHighRes") || "[]"); // besar
+
+const templateImg = new Image();
+templateImg.src = "wonwooday.png"; // Ganti jika perlu
+
+function drawImageCover(ctx, img, x, y, w, h) {
+  const imgRatio = img.width / img.height;
+  const targetRatio = w / h;
+  let drawWidth, drawHeight, offsetX, offsetY;
+
+  if (imgRatio > targetRatio) {
+    drawHeight = img.height;
+    drawWidth = img.height * targetRatio;
+    offsetX = (img.width - drawWidth) / 2;
+    offsetY = 0;
   } else {
-    templateImg.onload = () => {
-      outputCtx.drawImage(templateImg, 0, 0, outputSize.w, outputSize.h);
-      previewCtx.drawImage(templateImg, 0, 0, previewSize.w, previewSize.h);
-      hideLoading();
-    };
+    drawWidth = img.width;
+    drawHeight = img.width / targetRatio;
+    offsetX = 0;
+    offsetY = (img.height - drawHeight) / 2;
   }
+
+  ctx.drawImage(img, offsetX, offsetY, drawWidth, drawHeight, x, y, w, h);
 }
+
+const startTime = Date.now();
+
+function drawAll() {
+  previewCtx.clearRect(0, 0, previewCanvas.width, previewCanvas.height);
+  outputCtx.clearRect(0, 0, outputCanvas.width, outputCanvas.height);
+
+  if (photoData.length === 0 || photoDataHighRes.length === 0) {
+    alert("Tidak ada foto untuk digabung.");
+    document.getElementById("loadingOverlay").style.display = "none";
+    return;
+  }
+
+  let loaded = 0;
+
+  photoData.forEach((previewUrl, i) => {
+    const previewImg = new Image();
+    const highResImg = new Image();
+
+    previewImg.src = previewUrl;
+    highResImg.src = photoDataHighRes[i];
+
+    let previewLoaded = false;
+    let highResLoaded = false;
+
+    previewImg.onload = () => {
+      previewLoaded = true;
+      if (highResLoaded) handleDraw();
+    };
+
+    highResImg.onload = () => {
+      highResLoaded = true;
+      if (previewLoaded) handleDraw();
+    };
+
+    function handleDraw() {
+      drawImageCover(previewCtx, previewImg, positionsPreview[i].x, positionsPreview[i].y, photoSize.previewW, photoSize.previewH);
+      drawImageCover(outputCtx, highResImg, positionsOutput[i].x, positionsOutput[i].y, photoSize.w, photoSize.h);
+
+      loaded++;
+
+      if (loaded === photoData.length) {
+        const hideLoading = () => {
+          const elapsed = Date.now() - startTime;
+          const remainingTime = Math.max(0, 1000 - elapsed);
+
+          setTimeout(() => {
+            const overlay = document.getElementById("loadingOverlay");
+            overlay.style.opacity = "0";
+            setTimeout(() => {
+              overlay.style.display = "none";
+            }, 300);
+          }, remainingTime);
         };
-      });
+
+        if (templateImg.complete) {
+          outputCtx.drawImage(templateImg, 0, 0, outputSize.w, outputSize.h);
+          previewCtx.drawImage(templateImg, 0, 0, previewSize.w, previewSize.h);
+          hideLoading();
+        } else {
+          templateImg.onload = () => {
+            outputCtx.drawImage(templateImg, 0, 0, outputSize.w, outputSize.h);
+            previewCtx.drawImage(templateImg, 0, 0, previewSize.w, previewSize.h);
+            hideLoading();
+          };
+        }
+      }
     }
+  });
+}
 
-    drawAll();
+drawAll();
 
-    document.getElementById("downloadBtn").addEventListener("click", () => {
-      const link = document.createElement("a");
-      link.download = "photo-strip.png";
-      link.href = outputCanvas.toDataURL();
-      link.click();
-    });
-
-    document.getElementById("backBtn").addEventListener("click", () => {
-      window.location.href = "photo.html";
-    });
+document.getElementById("downloadBtn").addEventListener("click", () => {
+  const link = document.createElement("a");
+  link.download = "photo-strip.png";
+  link.href = outputCanvas.toDataURL();
+  link.click();
+});
   </script>
 </body>
 </html>
