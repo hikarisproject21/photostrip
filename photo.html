@@ -212,8 +212,8 @@ uploadInput.addEventListener("change", (e) => {
     img.onload = function () {
       // Crop dan resize gambar ke ukuran final 220x170, mirip kamera
       const canvas = document.createElement("canvas");
-      canvas.width = 220;
-      canvas.height = 170;
+      canvas.width = 2200;
+      canvas.height = 1700;
       const ctx = canvas.getContext("2d");
 
       const imgAspect = img.width / img.height;
