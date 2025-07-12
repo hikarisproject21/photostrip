@@ -183,6 +183,8 @@ ctx.drawImage(
 
     nextBtn.addEventListener("click", () => {
       sessionStorage.setItem("photoData", JSON.stringify(photos));
+      
+      sessionStorage.setItem("photoDataHighRes", JSON.stringify(photosHighRes));
       window.location.href = "result.html";
     });
 
