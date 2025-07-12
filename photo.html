@@ -162,7 +162,9 @@ ctx.drawImage(
 
 
         const dataURL = canvas.toDataURL();
+        const highResDataURL = canvas.toDataURL("image/png");
         photos.push(dataURL);
+        photosHighRes.push(highResDataURL);
 
         renderPreviews();
         updateUI();
@@ -183,7 +185,6 @@ ctx.drawImage(
 
     nextBtn.addEventListener("click", () => {
       sessionStorage.setItem("photoData", JSON.stringify(photos));
-      
       sessionStorage.setItem("photoDataHighRes", JSON.stringify(photosHighRes));
       window.location.href = "result.html";
     });
